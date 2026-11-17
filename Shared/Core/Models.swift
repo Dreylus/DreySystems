@@ -127,12 +127,21 @@ struct HubData: CheckedData {
     var currency = "MX$"
     var appearance = "system"
     var avatar: Data?
-    var metrics: [String: [Metric]] = Dictionary(uniqueKeysWithValues: [7,28,90,365].map { day in
-        (String(day), [Metric(title: "Views", value: 234600 * Double(day)/28),
-                       Metric(title: "Watch time (hours)", value: 736 * Double(day)/28),
-                       Metric(title: "Subscribers", value: 67 * Double(day)/28),
-                       Metric(title: "Estimated revenue", value: 318 * Double(day)/28, status: .check)])
-    })
+    var metrics: [String: [Metric]] = HubData.initialMetrics()
+    private static func initialMetrics() -> [String: [Metric]] {
+        var result: [String: [Metric]] = [:]
+        for day: Int in [7, 28, 90, 365] {
+            let factor: Double = Double(day) / 28.0
+            let values: [Metric] = [
+                Metric(title: "Views", value: 234600.0 * factor),
+                Metric(title: "Watch time (hours)", value: 736.0 * factor),
+                Metric(title: "Subscribers", value: 67.0 * factor),
+                Metric(title: "Estimated revenue", value: 318.0 * factor, status: .check)
+            ]
+            result[String(day)] = values
+        }
+        return result
+    }
     var videos = [Video(title: "Nosey Animatronic ☠️ #horror", age: "First 425 days 12 hours", views: 41000, likes: 643, commentCount: 70),
                   Video(title: "Minecraft Horror Mods ☠️", age: "First 431 days 9 hours", views: 958000, likes: 10000, commentCount: 124)]
     var comments = [Comment(author: "B o n", age: "2w ago", text: "That caught me off guard!"),

@@ -1,0 +1,76 @@
+name: Build two native iOS apps
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  core-tests:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test real Swift model, persistence, and scheduling logic
+        run: swift test
+  build:
+    needs: core-tests
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [Store, SmoreHub]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect runner Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Install XcodeGen
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Compile for physical iPhone, without signing
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          xcodebuild -project AppleAppFactory.xcodeproj -scheme "$APP" \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee "logs/$APP.log"
+      - name: Verify device bundle and package unsigned IPA
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          set -euo pipefail
+          BUNDLE="build/Build/Products/Release-iphoneos/$APP.app"
+          test -d "$BUNDLE"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$BUNDLE/Info.plist")
+          test -x "$BUNDLE/$EXECUTABLE"
+          file "$BUNDLE/$EXECUTABLE" | tee "logs/$APP-executable.txt"
+          xcrun vtool -show-build "$BUNDLE/$EXECUTABLE" | tee "logs/$APP-platform.txt"
+          grep -Eq 'platform +IOS$' "logs/$APP-platform.txt"
+          xcrun lipo -verify_arch arm64 "$BUNDLE/$EXECUTABLE"
+          test -f "$BUNDLE/Assets.car"
+          mkdir -p staging/Payload dist
+          cp -R "$BUNDLE" staging/Payload/
+          (cd staging && /usr/bin/zip -qry "../dist/$APP-unsigned.ipa" Payload)
+          unzip -t "dist/$APP-unsigned.ipa"
+          shasum -a 256 "dist/$APP-unsigned.ipa" > "dist/$APP-unsigned.ipa.sha256"
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-unsigned-IPA
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-build-logs
+          path: logs/
+          if-no-files-found: ignore
+          retention-days: 7

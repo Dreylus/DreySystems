@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+build/
+dist/
+staging/
+logs/
+*.xcodeproj/
+*.xcworkspace/
+*.ipa
+*.p12
+*.mobileprovision

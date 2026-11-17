@@ -52,7 +52,7 @@ jobs:
           file "$BUNDLE/$EXECUTABLE" | tee "logs/$APP-executable.txt"
           xcrun vtool -show-build "$BUNDLE/$EXECUTABLE" | tee "logs/$APP-platform.txt"
           grep -Eq 'platform +IOS$' "logs/$APP-platform.txt"
-          xcrun lipo -verify_arch arm64 "$BUNDLE/$EXECUTABLE"
+          xcrun lipo "$BUNDLE/$EXECUTABLE" -verify_arch arm64
           test -f "$BUNDLE/Assets.car"
           mkdir -p staging/Payload dist
           cp -R "$BUNDLE" staging/Payload/

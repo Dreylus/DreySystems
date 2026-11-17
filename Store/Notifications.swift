@@ -20,8 +20,8 @@ import UIKit
         }
         pending = await center.pendingNotificationRequests()
         pending.sort { (left: UNNotificationRequest, right: UNNotificationRequest) -> Bool in
-            let leftDate: Date = left.trigger?.nextTriggerDate() ?? Date.distantFuture
-            let rightDate: Date = right.trigger?.nextTriggerDate() ?? Date.distantFuture
+            let leftDate: Date = left.nextDeliveryDate ?? Date.distantFuture
+            let rightDate: Date = right.nextDeliveryDate ?? Date.distantFuture
             return leftDate < rightDate
         }
     }
@@ -141,5 +141,13 @@ import UIKit
         let route = response.notification.request.content.userInfo["route"] as? String ?? response.notification.request.identifier
         Task { @MainActor in self.selectedID = route }
         completionHandler()
+    }
+}
+
+extension UNNotificationRequest {
+    var nextDeliveryDate: Date? {
+        if let calendar = trigger as? UNCalendarNotificationTrigger { return calendar.nextTriggerDate() }
+        if let interval = trigger as? UNTimeIntervalNotificationTrigger { return interval.nextTriggerDate() }
+        return nil
     }
 }

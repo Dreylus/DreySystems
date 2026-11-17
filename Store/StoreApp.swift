@@ -88,7 +88,7 @@ struct StoreRoot: View {
                     ForEach(notifications.pending, id: \.identifier) { request in
                         VStack(alignment: .leading) {
                             Text(request.content.title)
-                            if let date = request.trigger?.nextTriggerDate() { Text(date.formatted(date: .abbreviated, time: .shortened)) }
+                            if let date = request.nextDeliveryDate { Text(date.formatted(date: .abbreviated, time: .shortened)) }
                         }.font(.subheadline).swipeActions { Button("Cancel", role: .destructive) { notifications.cancel(request.identifier) } }
                     }
                 }

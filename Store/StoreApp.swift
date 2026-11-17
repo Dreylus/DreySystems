@@ -61,7 +61,7 @@ struct StoreRoot: View {
                     }.card()
                     HStack {
                         stat("Queued", "\(notifications.pending.count)")
-                        stat("Random gap", "\(Int(store.data.minimumGap))–\(Int(store.data.maximumGap))s")
+                        stat("Random gap", "\(store.data.minimumGap.formatted(.number.precision(.fractionLength(0))))–\(store.data.maximumGap.formatted(.number.precision(.fractionLength(0))))s")
                     }
                     Text("Queued alerts can arrive while locked or closed. When the batch runs out, reopen and refill. iOS controls delivery timing, grouping, sound, and Focus.").font(.footnote).foregroundStyle(.secondary)
                     Button("Send test in 10 seconds", systemImage: "bell.badge") { Task { await notifications.test(store.data) } }.buttonStyle(.bordered).disabled(notifications.busy)

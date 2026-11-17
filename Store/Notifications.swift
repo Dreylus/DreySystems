@@ -19,7 +19,11 @@ import UIKit
         default: permission = "Not requested"
         }
         pending = await center.pendingNotificationRequests()
-        pending.sort { ($0.trigger?.nextTriggerDate() ?? .distantFuture) < ($1.trigger?.nextTriggerDate() ?? .distantFuture) }
+        pending.sort { (left: UNNotificationRequest, right: UNNotificationRequest) -> Bool in
+            let leftDate: Date = left.trigger?.nextTriggerDate() ?? Date.distantFuture
+            let rightDate: Date = right.trigger?.nextTriggerDate() ?? Date.distantFuture
+            return leftDate < rightDate
+        }
     }
     func authorize() async throws {
         let settings = await center.notificationSettings()

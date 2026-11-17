@@ -19,55 +19,8 @@ struct StoreRoot: View {
     @State private var tappedRequest: String?
     var body: some View {
         TabView(selection: $tab) {
-            NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        HStack(spacing: 16) {
-                            LocalImage(data: store.data.image, symbol: "bag").frame(width: 66, height: 66).clipShape(RoundedRectangle(cornerRadius: 18))
-                            VStack(alignment: .leading) { Text(store.data.name).font(.largeTitle.bold()); Text("Your next chapter starts here.").foregroundStyle(.secondary) }
-                        }
-                        VStack(alignment: .leading, spacing: 14) {
-                            Label("PERSONAL SIMULATION", systemImage: "sparkles").font(.caption.bold()).foregroundStyle(.indigo)
-                            Text("A little momentum.").font(.title.bold())
-                            Text("Schedule a randomized batch of order alerts, then keep building.").foregroundStyle(.secondary)
-                            Button { Task { await notifications.refill(store.data) } } label: {
-                                Label(notifications.busy ? "Scheduling…" : "Start / refill batch", systemImage: "play.fill").frame(maxWidth: .infinity)
-                            }.buttonStyle(.borderedProminent).disabled(notifications.busy)
-                            Button("Stop order alerts", role: .destructive) { notifications.stopOrders() }.disabled(notifications.busy)
-                        }.card()
-                        HStack {
-                            stat("Queued", "\(notifications.pending.count)")
-                            stat("Random gap", "\(Int(store.data.minimumGap))–\(Int(store.data.maximumGap))s")
-                        }
-                        Text("Queued alerts can arrive while locked or closed. When the batch runs out, reopen and refill. iOS controls delivery timing, grouping, sound, and Focus.").font(.footnote).foregroundStyle(.secondary)
-                        Button("Send test in 10 seconds", systemImage: "bell.badge") { Task { await notifications.test(store.data) } }.buttonStyle(.bordered).disabled(notifications.busy)
-                    }.padding()
-                }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("Store").navigationBarTitleDisplayMode(.inline)
-            }.tabItem { Label("Home", systemImage: "square.grid.2x2") }.tag(0)
-            NavigationStack {
-                List {
-                    Section("Scheduled reminders") {
-                        ForEach(store.data.reminders) { reminder in
-                            Button { editing = reminder } label: {
-                                VStack(alignment: .leading) { Text(reminder.title); Text("\(reminder.rule.rawValue.capitalized) · \(reminder.enabled ? "Enabled" : "Paused")").font(.caption).foregroundStyle(.secondary) }
-                            }
-                        }.onDelete { offsets in
-                            for i in offsets { notifications.cancel(store.data.reminders[i].identifier) }
-                            store.data.reminders.remove(atOffsets: offsets)
-                        }
-                        Button("Add reminder", systemImage: "plus") { newReminder = true }
-                    }
-                    Section("Upcoming notification requests") {
-                        if notifications.pending.isEmpty { Text("Nothing queued. Start a batch or add a reminder.").foregroundStyle(.secondary) }
-                        ForEach(notifications.pending, id: \.identifier) { request in
-                            VStack(alignment: .leading) {
-                                Text(request.content.title)
-                                if let date = request.trigger?.nextTriggerDate() { Text(date, style: .date) + Text(" · ") + Text(date, style: .time) }
-                            }.font(.subheadline).swipeActions { Button("Cancel", role: .destructive) { notifications.cancel(request.identifier) } }
-                        }
-                    }
-                }.navigationTitle("Upcoming").refreshable { await notifications.refresh() }
-            }.tabItem { Label("Upcoming", systemImage: "calendar") }.tag(1)
+            homeTab.tabItem { Label("Home", systemImage: "square.grid.2x2") }.tag(0)
+            upcomingTab.tabItem { Label("Upcoming", systemImage: "calendar") }.tag(1)
             NavigationStack { settings }.tabItem { Label("Settings", systemImage: "slider.horizontal.3") }.tag(2)
         }
         .task { await notifications.refresh() }
@@ -88,6 +41,59 @@ struct StoreRoot: View {
         .errorAlert(Binding(get: { store.error ?? notifications.error }, set: { value in
             if value == nil { store.error = nil; notifications.error = nil }
         }))
+    }
+    var homeTab: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(spacing: 16) {
+                        LocalImage(data: store.data.image, symbol: "bag").frame(width: 66, height: 66).clipShape(RoundedRectangle(cornerRadius: 18))
+                        VStack(alignment: .leading) { Text(store.data.name).font(.largeTitle.bold()); Text("Your next chapter starts here.").foregroundStyle(.secondary) }
+                    }
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label("PERSONAL SIMULATION", systemImage: "sparkles").font(.caption.bold()).foregroundStyle(.indigo)
+                        Text("A little momentum.").font(.title.bold())
+                        Text("Schedule a randomized batch of order alerts, then keep building.").foregroundStyle(.secondary)
+                        Button { Task { await notifications.refill(store.data) } } label: {
+                            Label(notifications.busy ? "Scheduling…" : "Start / refill batch", systemImage: "play.fill").frame(maxWidth: .infinity)
+                        }.buttonStyle(.borderedProminent).disabled(notifications.busy)
+                        Button("Stop order alerts", role: .destructive) { notifications.stopOrders() }.disabled(notifications.busy)
+                    }.card()
+                    HStack {
+                        stat("Queued", "\(notifications.pending.count)")
+                        stat("Random gap", "\(Int(store.data.minimumGap))–\(Int(store.data.maximumGap))s")
+                    }
+                    Text("Queued alerts can arrive while locked or closed. When the batch runs out, reopen and refill. iOS controls delivery timing, grouping, sound, and Focus.").font(.footnote).foregroundStyle(.secondary)
+                    Button("Send test in 10 seconds", systemImage: "bell.badge") { Task { await notifications.test(store.data) } }.buttonStyle(.bordered).disabled(notifications.busy)
+                }.padding()
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("Store").navigationBarTitleDisplayMode(.inline)
+        }
+    }
+    var upcomingTab: some View {
+        NavigationStack {
+            List {
+                Section("Scheduled reminders") {
+                    ForEach(store.data.reminders) { reminder in
+                        Button { editing = reminder } label: {
+                            VStack(alignment: .leading) { Text(reminder.title); Text("\(reminder.rule.rawValue.capitalized) · \(reminder.enabled ? "Enabled" : "Paused")").font(.caption).foregroundStyle(.secondary) }
+                        }
+                    }.onDelete { offsets in
+                        for i in offsets { notifications.cancel(store.data.reminders[i].identifier) }
+                        store.data.reminders.remove(atOffsets: offsets)
+                    }
+                    Button("Add reminder", systemImage: "plus") { newReminder = true }
+                }
+                Section("Upcoming notification requests") {
+                    if notifications.pending.isEmpty { Text("Nothing queued. Start a batch or add a reminder.").foregroundStyle(.secondary) }
+                    ForEach(notifications.pending, id: \.identifier) { request in
+                        VStack(alignment: .leading) {
+                            Text(request.content.title)
+                            if let date = request.trigger?.nextTriggerDate() { Text(date.formatted(date: .abbreviated, time: .shortened)) }
+                        }.font(.subheadline).swipeActions { Button("Cancel", role: .destructive) { notifications.cancel(request.identifier) } }
+                    }
+                }
+            }.navigationTitle("Upcoming").refreshable { await notifications.refresh() }
+        }
     }
     func stat(_ name: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) { Text(name).foregroundStyle(.secondary); Text(value).font(.title3.bold()).minimumScaleFactor(0.5) }.card()

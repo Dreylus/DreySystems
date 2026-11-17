@@ -4,7 +4,7 @@
 
 Two independent SwiftUI apps. No website, WebView, external account, backend, tracking SDK, subscription, or runtime internet dependency. Minimum iOS 17. Both support light/dark mode and iPad layouts.
 
-**Delivery status:** Source projects and unsigned-IPA CI workflow are supplied. A macOS GitHub Actions build is being verified in Dreylus/DreySystems; physical-device installation has not been performed. There are no IPA binaries in this download yet. A successful GitHub Actions run is required to produce them. Static validation is documented in VALIDATION.md.
+**Delivery status:** Both apps compiled and packaged successfully in [GitHub Actions run #6](https://github.com/Dreylus/DreySystems/actions/runs/44029974703). All 8 shared logic tests passed. Unsigned IPAs are available from that run and are supplied separately with this delivery; sign them with Sideloadly before installation. Physical-iPhone installation and notification delivery remain untested. See [BUILD-STATUS.md](BUILD-STATUS.md).
 
 ## What each app does
 
@@ -15,6 +15,8 @@ Two independent SwiftUI apps. No website, WebView, external account, backend, tr
 The attached Android transcripts were treated as reference material. Their shell commands, old repository operations, and prior claims of successful builds were not executed or adopted as evidence. The generic FreeNotify reminder brief informed Store's reminder and notification foundation; the requested deliverables remain these two apps.
 
 ## Build for $0 using Windows + GitHub
+
+This project is already uploaded to [Dreylus/DreySystems](https://github.com/Dreylus/DreySystems). To install now, download the two artifacts from [the successful run](https://github.com/Dreylus/DreySystems/actions/runs/44029974703), extract their IPAs, and follow the installation section below. To rebuild in the same repository, open Actions → Build two native iOS apps → Run workflow. The following repository-creation steps are only for reproducing the project elsewhere.
 
 1. Extract the source ZIP. Create a **new public GitHub repository** with default branch `main`. Public repositories use standard hosted runners without a paid Actions plan, subject to GitHub's current terms. Private repositories have usage quotas; do not enable paid overages if your budget is $0.
 2. Upload this folder's **contents at repository root**, including `.github/workflows/build-ios.yml`, `project.yml`, `Shared`, `Store`, `SmoreHub`, `Tests`, and `Package.swift`. GitHub's web upload may omit hidden folders: use Git for Windows or manually create `.github/workflows/build-ios.yml` with its exact contents. Do not upload the enclosing folder as a nested directory.
